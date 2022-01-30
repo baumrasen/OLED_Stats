@@ -2,49 +2,37 @@
 # For Raspberry Pi Desktop Case with OLED Stats Display
 # Base on Adafruit CircuitPython & SSD1306 Libraries
 # Installation & Setup Instructions - https://www.the-diy-life.com/add-an-oled-stats-display-to-raspberry-pi-os-bullseye/
-import time
-import board
-import busio
-import digitalio
+#
+# Changed to use luma.oled
+# pip install luma.oled
 
+import time
 from PIL import Image, ImageDraw, ImageFont
-import adafruit_ssd1306
+from luma.core.interface.serial import i2c
+from luma.core.render import canvas
+from luma.oled.device import sh1106, ssd1306
+from PIL import ImageFont, ImageDraw, Image
 
 import subprocess
 
-# Define the Reset Pin
-oled_reset = digitalio.DigitalInOut(board.D4)
-
-# Display Parameters
-WIDTH = 128
-HEIGHT = 64
-BORDER = 5
-
-# Use for I2C.
-i2c = board.I2C()
-oled = adafruit_ssd1306.SSD1306_I2C(WIDTH, HEIGHT, i2c, addr=0x3C, reset=oled_reset)
-
-# Clear display.
-oled.fill(0)
-oled.show()
+serial = i2c(port=1, address=0x3C)
+oled = sh1106(serial)
 
 # Create blank image for drawing.
 # Make sure to create image with mode '1' for 1-bit color.
 image = Image.new("1", (oled.width, oled.height))
 
-# Get drawing object to draw on image.
-draw = ImageDraw.Draw(image)
-
-# Draw a white background
-draw.rectangle((0, 0, oled.width, oled.height), outline=255, fill=255)
-
 font = ImageFont.truetype('PixelOperator.ttf', 16)
 #font = ImageFont.load_default()
 
 while True:
+  with canvas(oled) as draw:
+
+    # Draw a white background
+    draw.rectangle(oled.bounding_box, outline=255, fill=255)
 
     # Draw a black filled box to clear the image.
-    draw.rectangle((0, 0, oled.width, oled.height), outline=0, fill=0)
+    draw.rectangle(oled.bounding_box, outline=0, fill=0)
 
     # Shell scripts for system monitoring from here : https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
     cmd = "hostname -I | cut -d\' \' -f1"
@@ -64,8 +52,6 @@ while True:
     draw.text((80, 16), str(temp,'utf-8') , font=font, fill=255)
     draw.text((0, 32), str(MemUsage,'utf-8'), font=font, fill=255)
     draw.text((0, 48), str(Disk,'utf-8'), font=font, fill=255)
-        
-    # Display image
-    oled.image(image)
-    oled.show()
-    time.sleep(.1)
+
+    # slow for low cpu usage
+    time.sleep(5)
