@@ -5,18 +5,25 @@
 #
 # Changed to use luma.oled
 # pip install luma.oled
+#
+# start with (for example) 
+# python3 stats.py -d sh1106 -r 2
+# 
+# get help with start parameter
+# python3 stats.py -h
 
 import time
-from PIL import Image, ImageDraw, ImageFont
-from luma.core.interface.serial import i2c
-from luma.core.render import canvas
-from luma.oled.device import sh1106, ssd1306
-from PIL import ImageFont, ImageDraw, Image
-
 import subprocess
 
-serial = i2c(port=1, address=0x3C)
-oled = sh1106(serial)
+from luma.core.render import canvas
+from luma_opts import get_device
+from PIL import Image, ImageFont
+
+## rotate: An integer value of 0 (default), 1, 2 or 3 only, where 0 is
+##        no rotation, 1 is rotate 90° clockwise, 2 is 180° rotation and 3
+##        represents 270° rotation.
+#oled = sh1106(serial, rotate=2)
+oled = get_device()
 
 # Create blank image for drawing.
 # Make sure to create image with mode '1' for 1-bit color.
